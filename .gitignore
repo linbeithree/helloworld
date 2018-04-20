@@ -1,0 +1,12 @@
+*.bin
+*.elf
+*.hex
+*.hex_128
+*.ld
+*.lst
+*.map
+*.o
+tags
+*.swp
+*.swo
+demo
