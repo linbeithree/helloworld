@@ -1,0 +1,45 @@
+GITVER=`git log --dense --pretty=oneline -n1 | head -c8`
+TARGET_BASE="cli_release-git-$(GITVER)"
+TARGET_BIN="$(TARGET_BASE).bin"
+TARGET_ELF="$(TARGET_BASE).elf"
+TARGET_LST="$(TARGET_BASE).lst"
+TARGET_MAP="$(TARGET_BASE).map"
+
+DEBUG_TARGET_BASE="cli_debug"
+DEBUG_TARGET_BIN="$(DEBUG_TARGET_BASE).bin"
+DEBUG_TARGET_ELF="$(DEBUG_TARGET_BASE).elf"
+DEBUG_TARGET_LST="$(DEBUG_TARGET_BASE).lst"
+DEBUG_TARGET_MAP="$(DEBUG_TARGET_BASE).map"
+
+include config.mk
+
+ifdef CYGPKG_DEVS_QSPI_BP2016
+COBJ_FILES += src/qspi_test.c
+endif
+
+ifdef CYGPKG_BP2016_I2C_DEV_MAX2112
+COBJ_FILES += src/max2112_test.c
+endif
+
+ifdef CYGPKG_DEVS_SPI_ARM_BP2016
+COBJ_FILES += src/bp2016_flash_spi_cli_test.c
+endif
+
+ifdef CYGPKG_IO_COMMON_SIM_ARM_BP2016
+COBJ_FILES += src/bp2016_sim_test.c
+endif
+
+debug:
+	echo "------------------$(COBJ_FILES)"
+	arm-eabi-gcc -g -o $(DEBUG_TARGET_ELF) $(COBJ_FILES) -I ./install/include/ -I ./include/ -L ./install/lib/ -T target.ld -nostdlib
+	arm-eabi-nm -n $(DEBUG_TARGET_ELF) | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $(DEBUG_TARGET_MAP)
+	arm-eabi-objcopy -O binary $(DEBUG_TARGET_ELF) $(DEBUG_TARGET_BIN)
+	arm-eabi-objdump -DS $(DEBUG_TARGET_ELF) > $(DEBUG_TARGET_LST)
+
+release:
+	echo "------------------$(COBJ_FILES)"
+	arm-eabi-gcc -g -o $(TARGET_ELF) $(COBJ_FILES) -I ../install/include/ -I ./include/ -L ../install/lib/ -T target.ld -nostdlib
+	arm-eabi-nm -n $(TARGET_ELF) | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $(TARGET_MAP)
+	arm-eabi-objcopy -O binary $(TARGET_ELF) $(TARGET_BIN)
+	arm-eabi-objdump -DS $(TARGET_ELF) > $(TARGET_LST)
+
